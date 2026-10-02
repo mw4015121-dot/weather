@@ -1,0 +1,3537 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Pakistan Live Weather</title>
+
+    <!-- Leaflet Map -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
+    >
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family:
+                Arial,
+                "Noto Nastaliq Urdu",
+                sans-serif;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #06101c,
+                    #0b1e31
+                );
+
+            color: white;
+            min-height: 100vh;
+        }
+
+
+        /* ================= HEADER ================= */
+
+        header {
+            background:
+                linear-gradient(
+                    135deg,
+                    #071a2c,
+                    #0d3855
+                );
+
+            padding: 25px 15px;
+            text-align: center;
+
+            border-bottom:
+                2px solid #1e7da8;
+        }
+
+        header h1 {
+            color: #55ddff;
+            font-size: 34px;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: #c8d9e8;
+            font-size: 16px;
+        }
+
+
+        /* ================= SEARCH ================= */
+
+        .search-section {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 10px;
+            direction: ltr;
+        }
+
+        .search-box {
+            flex: 1;
+        }
+
+        #searchInput {
+            width: 100%;
+            height: 52px;
+
+            padding:
+                0 18px;
+
+            border-radius: 12px;
+            border: 2px solid #277da1;
+
+            background: #102238;
+            color: white;
+
+            font-size: 17px;
+
+            outline: none;
+
+            direction: ltr;
+        }
+
+        #searchInput:focus {
+            border-color: #55ddff;
+
+            box-shadow:
+                0 0 12px
+                rgba(
+                    85,
+                    221,
+                    255,
+                    0.25
+                );
+        }
+
+        #searchInput::placeholder {
+            color: #9fb3c8;
+        }
+
+
+        #searchBtn {
+            height: 52px;
+
+            padding:
+                0 25px;
+
+            border: none;
+            border-radius: 12px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #0d8bc0,
+                    #17b0df
+                );
+
+            color: white;
+
+            font-size: 16px;
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        #searchBtn:hover {
+            background:
+                linear-gradient(
+                    135deg,
+                    #0b759f,
+                    #0e91bb
+                );
+        }
+
+
+        /* ================= SEARCH RESULTS ================= */
+
+        #searchResults {
+            display: flex;
+
+            flex-wrap: nowrap;
+
+            overflow-x: auto;
+
+            gap: 10px;
+
+            padding:
+                12px 2px;
+
+            direction: ltr;
+
+            scrollbar-width: thin;
+        }
+
+
+        #searchResults::-webkit-scrollbar {
+            height: 7px;
+        }
+
+        #searchResults::-webkit-scrollbar-thumb {
+            background: #277da1;
+            border-radius: 20px;
+        }
+
+
+        .city-result {
+            flex:
+                0 0 auto;
+
+            min-width: 180px;
+
+            padding: 12px 15px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #102d45,
+                    #153b58
+                );
+
+            border:
+                1px solid #277da1;
+
+            border-radius: 12px;
+
+            color: white;
+
+            cursor: pointer;
+
+            text-align: right;
+
+            transition:
+                transform .2s,
+                background .2s,
+                border .2s;
+        }
+
+        .city-result:hover {
+            transform:
+                translateY(-3px);
+
+            border-color:
+                #55ddff;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #155274,
+                    #176b91
+                );
+        }
+
+        .city-name {
+            display: block;
+
+            color:
+                #55ddff;
+
+            font-size:
+                16px;
+
+            font-weight:
+                bold;
+        }
+
+        .city-info {
+            display: block;
+
+            color:
+                #c6d8e5;
+
+            font-size:
+                12px;
+
+            margin-top:
+                4px;
+        }
+
+
+        .search-message {
+            width: 100%;
+
+            padding: 12px;
+
+            color:
+                #b9cad8;
+
+            text-align:
+                center;
+        }
+
+
+        /* ================= MAIN CONTAINER ================= */
+
+        .container {
+            max-width: 1200px;
+
+            margin:
+                auto;
+
+            padding:
+                0 15px 35px;
+        }
+
+
+        /* ================= LOCATION ================= */
+
+        .location-title {
+            background:
+                linear-gradient(
+                    135deg,
+                    #102b44,
+                    #123d5b
+                );
+
+            border:
+                1px solid #277da1;
+
+            border-radius:
+                15px;
+
+            padding:
+                17px;
+
+            margin-bottom:
+                15px;
+
+            text-align:
+                center;
+        }
+
+        .location-title h2 {
+            color:
+                #55ddff;
+
+            margin-bottom:
+                7px;
+        }
+
+        .location-title p {
+            color:
+                #c9d7e4;
+        }
+
+
+        /* ================= CLOCKS ================= */
+
+        .clocks {
+            display:
+                grid;
+
+            grid-template-columns:
+                repeat(2, 1fr);
+
+            gap:
+                15px;
+
+            margin-bottom:
+                15px;
+        }
+
+        .clock-card {
+            background:
+                #0e2236;
+
+            border:
+                1px solid #245878;
+
+            border-radius:
+                15px;
+
+            padding:
+                18px;
+
+            text-align:
+                center;
+        }
+
+        .clock-card h3 {
+            color:
+                #5bdfff;
+
+            margin-bottom:
+                8px;
+        }
+
+        .clock-time {
+            font-size:
+                30px;
+
+            font-weight:
+                bold;
+        }
+
+        .clock-date {
+            color:
+                #b8cbdc;
+
+            margin-top:
+                5px;
+        }
+
+
+        /* ================= WEATHER ================= */
+
+        .weather-main {
+            display:
+                grid;
+
+            grid-template-columns:
+                1fr 1fr;
+
+            gap:
+                15px;
+
+            margin-bottom:
+                15px;
+        }
+
+        .weather-card {
+            background:
+                linear-gradient(
+                    135deg,
+                    #10283e,
+                    #0c1e30
+                );
+
+            border:
+                1px solid #245878;
+
+            border-radius:
+                15px;
+
+            padding:
+                25px;
+        }
+
+        .weather-icon {
+            text-align:
+                center;
+
+            font-size:
+                58px;
+
+            margin-bottom:
+                8px;
+        }
+
+        .temperature {
+            text-align:
+                center;
+
+            font-size:
+                58px;
+
+            font-weight:
+                bold;
+
+            color:
+                #55ddff;
+        }
+
+        .weather-description {
+            text-align:
+                center;
+
+            font-size:
+                19px;
+
+            color:
+                #d7e5ef;
+
+            margin-top:
+                8px;
+        }
+
+
+        .weather-details {
+            display:
+                grid;
+
+            grid-template-columns:
+                repeat(2, 1fr);
+
+            gap:
+                10px;
+        }
+
+        .detail {
+            background:
+                #102d45;
+
+            padding:
+                13px;
+
+            border-radius:
+                10px;
+
+            text-align:
+                center;
+        }
+
+        .detail span {
+            display:
+                block;
+
+            color:
+                #9fb6c9;
+
+            font-size:
+                13px;
+
+            margin-bottom:
+                5px;
+        }
+
+        .detail strong {
+            color:
+                white;
+
+            font-size:
+                15px;
+        }
+
+
+        /* ================= SUN ================= */
+
+        .sun-card {
+            background:
+                #0e2236;
+
+            border:
+                1px solid #245878;
+
+            border-radius:
+                15px;
+
+            padding:
+                20px;
+
+            margin-bottom:
+                15px;
+        }
+
+        .sun-card h2 {
+            color:
+                #55ddff;
+
+            text-align:
+                center;
+
+            margin-bottom:
+                15px;
+        }
+
+        .sun-grid {
+            display:
+                grid;
+
+            grid-template-columns:
+                repeat(2, 1fr);
+
+            gap:
+                15px;
+        }
+
+        .sun-item {
+            background:
+                #102d45;
+
+            border-radius:
+                12px;
+
+            padding:
+                15px;
+
+            text-align:
+                center;
+        }
+
+        .sun-item .icon {
+            font-size:
+                32px;
+        }
+
+        .sun-item h3 {
+            margin:
+                6px 0;
+        }
+
+
+        /* ================= MAP ================= */
+
+        .map-card {
+            background:
+                #0e2236;
+
+            border:
+                1px solid #245878;
+
+            border-radius:
+                15px;
+
+            padding:
+                15px;
+
+            margin-bottom:
+                15px;
+        }
+
+        .map-card h2 {
+            text-align:
+                center;
+
+            color:
+                #55ddff;
+
+            margin-bottom:
+                12px;
+        }
+
+        #map {
+            height:
+                500px;
+
+            width:
+                100%;
+
+            border-radius:
+                12px;
+
+            overflow:
+                hidden;
+        }
+
+
+        /* ================= FORECAST ================= */
+
+        .forecast-card {
+            background:
+                #0e2236;
+
+            border:
+                1px solid #245878;
+
+            border-radius:
+                15px;
+
+            padding:
+                20px;
+        }
+
+        .forecast-card h2 {
+            color:
+                #55ddff;
+
+            text-align:
+                center;
+
+            margin-bottom:
+                15px;
+        }
+
+        .forecast-grid {
+            display:
+                grid;
+
+            grid-template-columns:
+                repeat(7, 1fr);
+
+            gap:
+                8px;
+        }
+
+        .forecast-day {
+            background:
+                #102d45;
+
+            border-radius:
+                12px;
+
+            padding:
+                12px 6px;
+
+            text-align:
+                center;
+        }
+
+        .forecast-day .day {
+            color:
+                #55ddff;
+
+            font-weight:
+                bold;
+
+            font-size:
+                13px;
+        }
+
+        .forecast-day .date {
+            color:
+                #b6c8d8;
+
+            font-size:
+                12px;
+
+            margin:
+                5px 0;
+        }
+
+        .forecast-day .icon {
+            font-size:
+                30px;
+
+            margin:
+                5px 0;
+        }
+
+        .forecast-temp {
+            font-weight:
+                bold;
+        }
+
+        .forecast-temp .max {
+            color:
+                #ffb86b;
+        }
+
+        .forecast-temp .min {
+            color:
+                #8ed7ff;
+        }
+
+
+        /* ================= STATUS ================= */
+
+        .loading {
+            text-align:
+                center;
+
+            padding:
+                20px;
+
+            color:
+                #5bdfff;
+        }
+
+        .error {
+            text-align:
+                center;
+
+            padding:
+                15px;
+
+            color:
+                #ff7777;
+
+            background:
+                #351b1b;
+
+            border-radius:
+                10px;
+
+            margin:
+                10px 0;
+        }
+
+
+        /* ================= RESPONSIVE ================= */
+
+        @media(max-width:900px) {
+
+            .forecast-grid {
+                grid-template-columns:
+                    repeat(4, 1fr);
+            }
+
+        }
+
+
+        @media(max-width:700px) {
+
+            header h1 {
+                font-size:
+                    26px;
+            }
+
+            .search-row {
+                flex-direction:
+                    column;
+            }
+
+            #searchBtn {
+                width:
+                    100%;
+            }
+
+            .clocks,
+            .weather-main {
+                grid-template-columns:
+                    1fr;
+            }
+
+            .forecast-grid {
+                grid-template-columns:
+                    repeat(2, 1fr);
+            }
+
+            #map {
+                height:
+                    400px;
+            }
+
+        }
+
+
+        @media(max-width:450px) {
+
+            .forecast-grid {
+                grid-template-columns:
+                    1fr;
+            }
+
+            .weather-details {
+                grid-template-columns:
+                    1fr;
+            }
+
+            .sun-grid {
+                grid-template-columns:
+                    1fr;
+            }
+
+            .temperature {
+                font-size:
+                    48px;
+            }
+
+        }
+
+
+        /* ================= LANGUAGE SWITCH ================= */
+
+        .lang-switch {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 14px;
+            direction: ltr;
+        }
+
+        .lang-btn {
+            padding: 8px 22px;
+            border-radius: 999px;
+            border: 2px solid #277da1;
+            background: #102238;
+            color: #c8d9e8;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background .2s, border-color .2s, color .2s;
+        }
+
+        .lang-btn:hover {
+            border-color: #55ddff;
+            color: white;
+        }
+
+        .lang-btn.active {
+            background: linear-gradient(135deg, #0d8bc0, #17b0df);
+            border-color: #55ddff;
+            color: white;
+        }
+
+        html[dir="ltr"] .city-result { text-align: left; }
+        html[dir="rtl"] .city-result { text-align: right; }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<header>
+
+    <h1>
+        <span data-i18n="title">🇵🇰 پاکستان لائیو ویدر</span>
+    </h1>
+
+    <p>
+        <span data-i18n="subtitle">Pakistan Live Weather — تمام شہروں کا تازہ موسم</span>
+    </p>
+
+    <div class="lang-switch">
+        <button type="button" class="lang-btn" data-lang="ur">اردو</button>
+        <button type="button" class="lang-btn" data-lang="en">English</button>
+    </div>
+</header>
+
+
+
+<!-- ================= SEARCH ================= -->
+
+<section class="search-section">
+
+    <div class="search-row">
+
+        <div class="search-box">
+
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="پاکستان کے کسی بھی شہر کا نام لکھیں..." data-i18n-placeholder="searchPlaceholder"
+                autocomplete="off"
+            >
+
+        </div>
+
+
+        <button id="searchBtn">
+            <span data-i18n="searchBtn">🔍 Search</span>
+        </button>
+
+    </div>
+
+
+    <div id="searchResults"></div>
+
+</section>
+
+
+
+<div class="container">
+
+
+    <!-- ================= LOCATION ================= -->
+
+    <div class="location-title">
+
+        <h2 id="locationName">
+            مانسہرہ، پاکستان
+        </h2>
+
+        <p id="locationCoordinates">
+            <span data-i18n="loading">Loading...</span>
+        </p>
+
+    </div>
+
+
+
+    <!-- ================= CLOCK ================= -->
+
+    <div class="clocks">
+
+
+        <div class="clock-card">
+
+            <h3>
+                <span data-i18n="pakClock">🇵🇰 پاکستان کا وقت</span>
+            </h3>
+
+            <div
+                class="clock-time"
+                id="pakistanTime"
+            >
+                --:--:--
+            </div>
+
+            <div
+                class="clock-date"
+                id="pakistanDate"
+            >
+                --
+            </div>
+
+        </div>
+
+
+
+        <div class="clock-card">
+
+            <h3>
+                <span data-i18n="cityClock">📍 منتخب شہر کا وقت</span>
+            </h3>
+
+            <div
+                class="clock-time"
+                id="cityTime"
+            >
+                --:--:--
+            </div>
+
+            <div
+                class="clock-date"
+                id="cityDate"
+            >
+                --
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+
+    <!-- ================= WEATHER ================= -->
+
+    <div class="weather-main">
+
+
+        <div class="weather-card">
+
+            <div
+                class="weather-icon"
+                id="weatherIcon"
+            >
+                🌤️
+            </div>
+
+
+            <div
+                class="temperature"
+                id="temperature"
+            >
+                --°C
+            </div>
+
+
+            <div
+                class="weather-description"
+                id="weatherDescription"
+            >
+                <span data-i18n="weatherLoading">موسم لوڈ ہو رہا ہے...</span>
+            </div>
+
+        </div>
+
+
+
+        <div class="weather-card">
+
+
+            <div class="weather-details">
+
+
+                <div class="detail">
+
+                    <span>
+                        <span data-i18n="feels">🌡️ محسوس ہونے والا درجہ حرارت</span>
+                    </span>
+
+                    <strong id="feelsLike">
+                        --
+                    </strong>
+
+                </div>
+
+
+                <div class="detail">
+
+                    <span>
+                        <span data-i18n="humidity">💧 نمی</span>
+                    </span>
+
+                    <strong id="humidity">
+                        --
+                    </strong>
+
+                </div>
+
+
+                <div class="detail">
+
+                    <span>
+                        <span data-i18n="wind">💨 ہوا</span>
+                    </span>
+
+                    <strong id="windSpeed">
+                        --
+                    </strong>
+
+                </div>
+
+
+                <div class="detail">
+
+                    <span>
+                        <span data-i18n="windDir">🧭 ہوا کی سمت</span>
+                    </span>
+
+                    <strong id="windDirection">
+                        --
+                    </strong>
+
+                </div>
+
+
+                <div class="detail">
+
+                    <span>
+                        <span data-i18n="rain">🌧️ بارش</span>
+                    </span>
+
+                    <strong id="rain">
+                        --
+                    </strong>
+
+                </div>
+
+
+                <div class="detail">
+
+                    <span>
+                        <span data-i18n="cloud">☁️ Cloud Cover</span>
+                    </span>
+
+                    <strong id="cloudCover">
+                        --
+                    </strong>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+
+    <!-- ================= SUN ================= -->
+
+    <div class="sun-card">
+
+        <h2>
+            <span data-i18n="sun">🌅 سورج کے اوقات</span>
+        </h2>
+
+
+        <div class="sun-grid">
+
+
+            <div class="sun-item">
+
+                <div class="icon">
+                    🌅
+                </div>
+
+                <h3>
+                    <span data-i18n="sunrise">طلوع آفتاب</span>
+                </h3>
+
+                <strong id="sunrise">
+                    --:--
+                </strong>
+
+            </div>
+
+
+
+            <div class="sun-item">
+
+                <div class="icon">
+                    🌇
+                </div>
+
+                <h3>
+                    <span data-i18n="sunset">غروب آفتاب</span>
+                </h3>
+
+                <strong id="sunset">
+                    --:--
+                </strong>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ================= MAP ================= -->
+
+    <div class="map-card">
+
+        <h2>
+            <span data-i18n="map">🇵🇰 پاکستان کا نقشہ</span>
+        </h2>
+
+        <div id="map"></div>
+
+    </div>
+
+
+
+    <!-- ================= FORECAST ================= -->
+
+    <div class="forecast-card">
+
+        <h2>
+            <span data-i18n="forecast">📅 7 دن کا موسم</span>
+        </h2>
+
+        <div
+            id="forecast"
+            class="forecast-grid"
+        ></div>
+
+    </div>
+
+
+</div>
+
+
+
+<!-- ================= LEAFLET ================= -->
+
+<script
+    src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js">
+</script>
+
+
+
+<script>
+
+/* =========================================================
+   GLOBAL VARIABLES
+========================================================= */
+
+let map = null;
+
+let marker = null;
+
+let pakistanBoundary = null;
+
+let currentLatitude = 34.3333;
+
+let currentLongitude = 73.2000;
+
+let currentTimezone =
+    "Asia/Karachi";
+
+let searchTimer = null;
+
+/* =========================================================
+   LANGUAGE (اردو / English)
+========================================================= */
+let currentLang = "ur";
+let lastWeatherData = null;
+let lastCity = "Mansehra";
+let lastProvince = "Khyber Pakhtunkhwa";
+
+try {
+    const saved = localStorage.getItem("weatherLang");
+    if (saved === "ur" || saved === "en") {
+        currentLang = saved;
+    }
+} catch (e) {}
+
+const I18N = {
+    ur: {
+        pageTitle: "پاکستان لائیو ویدر",
+        title: "🇵🇰 پاکستان لائیو ویدر",
+        subtitle: "پاکستان لائیو ویدر — تمام شہروں کا تازہ موسم",
+        searchBtn: "🔍 تلاش کریں",
+        searchPlaceholder: "پاکستان کے کسی بھی شہر کا نام لکھیں...",
+        loading: "لوڈ ہو رہا ہے...",
+        pakClock: "🇵🇰 پاکستان کا وقت",
+        cityClock: "📍 منتخب شہر کا وقت",
+        weatherLoading: "موسم لوڈ ہو رہا ہے...",
+        feels: "🌡️ محسوس ہونے والا درجہ حرارت",
+        humidity: "💧 نمی",
+        wind: "💨 ہوا",
+        windDir: "🧭 ہوا کی سمت",
+        rain: "🌧️ بارش",
+        cloud: "☁️ بادلوں کی مقدار",
+        sun: "🌅 سورج کے اوقات",
+        sunrise: "طلوع آفتاب",
+        sunset: "غروب آفتاب",
+        map: "🇵🇰 پاکستان کا نقشہ",
+        forecast: "📅 7 دن کا موسم",
+        pakistan: "پاکستان",
+        latitude: "عرض البلد",
+        longitude: "طول البلد",
+        searching: "شہر تلاش کیے جا رہے ہیں...",
+        noCity: "پاکستان میں اس نام کا شہر نہیں ملا۔",
+        unknownCity: "نامعلوم شہر",
+        selectedLocation: "منتخب مقام",
+        weatherFailed: "موسم حاصل نہیں ہو سکا",
+        apiError: "موسم کی سروس سے رابطہ نہیں ہو سکا۔",
+        noForecast: "پیشگوئی دستیاب نہیں ہے۔"
+    },
+    en: {
+        pageTitle: "Pakistan Live Weather",
+        title: "🇵🇰 Pakistan Live Weather",
+        subtitle: "Pakistan Live Weather — latest weather for all cities",
+        searchBtn: "🔍 Search",
+        searchPlaceholder: "Type any city name in Pakistan...",
+        loading: "Loading...",
+        pakClock: "🇵🇰 Pakistan Time",
+        cityClock: "📍 Selected City Time",
+        weatherLoading: "Loading weather...",
+        feels: "🌡️ Feels Like",
+        humidity: "💧 Humidity",
+        wind: "💨 Wind",
+        windDir: "🧭 Wind Direction",
+        rain: "🌧️ Rain",
+        cloud: "☁️ Cloud Cover",
+        sun: "🌅 Sun Timings",
+        sunrise: "Sunrise",
+        sunset: "Sunset",
+        map: "🇵🇰 Map of Pakistan",
+        forecast: "📅 7-Day Forecast",
+        pakistan: "Pakistan",
+        latitude: "Latitude",
+        longitude: "Longitude",
+        searching: "Searching cities...",
+        noCity: "No city with this name was found in Pakistan.",
+        unknownCity: "Unknown City",
+        selectedLocation: "Selected Location",
+        weatherFailed: "Could not load weather",
+        apiError: "Could not connect to the weather service.",
+        noForecast: "Forecast is not available."
+    }
+};
+
+function t(key) {
+    return (
+        (I18N[currentLang] && I18N[currentLang][key]) ||
+        I18N.en[key] ||
+        key
+    );
+}
+
+function localeCode() {
+    return currentLang === "ur" ? "ur-PK" : "en-GB";
+}
+
+const CITY_UR = {
+    "Lahore": "لاہور", "Faisalabad": "فیصل آباد", "Rawalpindi": "راولپنڈی",
+    "Gujranwala": "گوجرانوالہ", "Multan": "ملتان", "Sialkot": "سیالکوٹ",
+    "Bahawalpur": "بہاولپور", "Sargodha": "سرگودھا", "Jhang": "جھنگ",
+    "Sheikhupura": "شیخوپورہ", "Gujrat": "گجرات", "Kasur": "قصور",
+    "Okara": "اوکاڑہ", "Sahiwal": "ساہیوال", "Dera Ghazi Khan": "ڈیرہ غازی خان",
+    "Rahim Yar Khan": "رحیم یار خان", "Jhelum": "جہلم", "Attock": "اٹک",
+    "Chakwal": "چکوال", "Mianwali": "میانوالی", "Muzaffargarh": "مظفرگڑھ",
+    "Karachi": "کراچی", "Hyderabad": "حیدرآباد", "Sukkur": "سکھر",
+    "Larkana": "لاڑکانہ", "Nawabshah": "نوابشاہ", "Mirpur Khas": "میرپور خاص",
+    "Thatta": "ٹھٹھہ", "Jacobabad": "جیکب آباد",
+    "Peshawar": "پشاور", "Mardan": "مردان", "Mingora": "مینگورہ",
+    "Mansehra": "مانسہرہ", "Abbottabad": "ایبٹ آباد", "Kohat": "کوہاٹ",
+    "Nowshera": "نوشہرہ", "Charsadda": "چارسدہ", "Bannu": "بنوں",
+    "Dera Ismail Khan": "ڈیرہ اسماعیل خان", "Swabi": "صوابی", "Haripur": "ہری پور",
+    "Quetta": "کوئٹہ", "Gwadar": "گوادر", "Turbat": "تربت", "Khuzdar": "خضدار",
+    "Chaman": "چمن", "Sibi": "سبی", "Zhob": "ژوب",
+    "Islamabad": "اسلام آباد",
+    "Gilgit": "گلگت", "Skardu": "سکردو", "Hunza": "ہنزہ",
+    "Muzaffarabad": "مظفرآباد", "Mirpur": "میرپور", "Rawalakot": "راولاکوٹ",
+    "Kotli": "کوٹلی"
+};
+
+const PROVINCE_UR = {
+    "Punjab": "پنجاب",
+    "Sindh": "سندھ",
+    "Khyber Pakhtunkhwa": "خیبر پختونخوا",
+    "Balochistan": "بلوچستان",
+    "Islamabad": "اسلام آباد",
+    "Islamabad Capital Territory": "وفاقی دارالحکومت اسلام آباد",
+    "Gilgit-Baltistan": "گلگت بلتستان",
+    "Azad Jammu and Kashmir": "آزاد جموں و کشمیر",
+    "Azad Kashmir": "آزاد کشمیر"
+};
+
+function cityLabel(name) {
+    if (currentLang === "ur" && CITY_UR[name]) {
+        return CITY_UR[name];
+    }
+    return name;
+}
+
+function provinceLabel(name) {
+    if (currentLang === "ur" && PROVINCE_UR[name]) {
+        return PROVINCE_UR[name];
+    }
+    return name;
+}
+
+function renderLocation() {
+    const sep = currentLang === "ur" ? "، " : ", ";
+
+    document.getElementById("locationName").textContent =
+        cityLabel(lastCity) + sep + t("pakistan");
+
+    document.getElementById("locationCoordinates").textContent =
+        t("latitude") + ": " + currentLatitude.toFixed(4) +
+        " | " +
+        t("longitude") + ": " + currentLongitude.toFixed(4) +
+        (lastProvince ? " | " + provinceLabel(lastProvince) : "");
+}
+
+function popupHtml() {
+    return "<b>" + cityLabel(lastCity) + "</b><br>🇵🇰 " + t("pakistan");
+}
+
+function refreshWeatherText() {
+    if (!lastWeatherData || !lastWeatherData.current) {
+        return;
+    }
+
+    const c = lastWeatherData.current;
+    const info = weatherInfo(c.weather_code);
+
+    document.getElementById("weatherDescription").textContent = info[1];
+    document.getElementById("windDirection").textContent =
+        getWindDirection(c.wind_direction_10m);
+
+    displayForecast(lastWeatherData.daily);
+}
+
+function applyLanguage() {
+    document.documentElement.lang = currentLang;
+    document.documentElement.dir = currentLang === "ur" ? "rtl" : "ltr";
+    document.title = t("pageTitle");
+
+    document.querySelectorAll("[data-i18n]").forEach(function(el) {
+        el.textContent = t(el.getAttribute("data-i18n"));
+    });
+
+    document.querySelectorAll("[data-i18n-placeholder]").forEach(function(el) {
+        el.placeholder = t(el.getAttribute("data-i18n-placeholder"));
+    });
+
+    document.querySelectorAll(".lang-btn").forEach(function(btn) {
+        btn.classList.toggle(
+            "active",
+            btn.getAttribute("data-lang") === currentLang
+        );
+    });
+
+    renderLocation();
+
+    document.getElementById("searchInput").value = cityLabel(lastCity);
+
+    if (marker) {
+        marker.setPopupContent(popupHtml());
+    }
+
+    refreshWeatherText();
+    updateClocks();
+}
+
+function setLanguage(lang) {
+    if (lang !== "ur" && lang !== "en") {
+        return;
+    }
+
+    currentLang = lang;
+
+    try {
+        localStorage.setItem("weatherLang", lang);
+    } catch (e) {}
+
+    document.getElementById("searchResults").innerHTML = "";
+
+    applyLanguage();
+}
+
+
+
+
+/* =========================================================
+   PAKISTAN BOUNDS
+========================================================= */
+
+const PAKISTAN_BOUNDS = [
+    [23.3, 60.5],
+    [37.2, 77.9]
+];
+
+
+
+/* =========================================================
+   LOCAL PAKISTAN CITIES
+   API بند ہو تب بھی search کام کرے گی
+========================================================= */
+
+const PAKISTAN_CITIES = [
+
+    /* Punjab */
+
+    {
+        name: "Lahore",
+        province: "Punjab",
+        lat: 31.5204,
+        lon: 74.3587
+    },
+
+    {
+        name: "Faisalabad",
+        province: "Punjab",
+        lat: 31.4504,
+        lon: 73.1350
+    },
+
+    {
+        name: "Rawalpindi",
+        province: "Punjab",
+        lat: 33.5651,
+        lon: 73.0169
+    },
+
+    {
+        name: "Gujranwala",
+        province: "Punjab",
+        lat: 32.1877,
+        lon: 74.1945
+    },
+
+    {
+        name: "Multan",
+        province: "Punjab",
+        lat: 30.1575,
+        lon: 71.5249
+    },
+
+    {
+        name: "Sialkot",
+        province: "Punjab",
+        lat: 32.4945,
+        lon: 74.5229
+    },
+
+    {
+        name: "Bahawalpur",
+        province: "Punjab",
+        lat: 29.3956,
+        lon: 71.6836
+    },
+
+    {
+        name: "Sargodha",
+        province: "Punjab",
+        lat: 32.0836,
+        lon: 72.6711
+    },
+
+    {
+        name: "Jhang",
+        province: "Punjab",
+        lat: 31.2681,
+        lon: 72.3181
+    },
+
+    {
+        name: "Sheikhupura",
+        province: "Punjab",
+        lat: 31.7131,
+        lon: 73.9783
+    },
+
+    {
+        name: "Gujrat",
+        province: "Punjab",
+        lat: 32.5736,
+        lon: 74.0789
+    },
+
+    {
+        name: "Kasur",
+        province: "Punjab",
+        lat: 31.1156,
+        lon: 74.4467
+    },
+
+    {
+        name: "Okara",
+        province: "Punjab",
+        lat: 30.8103,
+        lon: 73.4597
+    },
+
+    {
+        name: "Sahiwal",
+        province: "Punjab",
+        lat: 30.6682,
+        lon: 73.1114
+    },
+
+    {
+        name: "Dera Ghazi Khan",
+        province: "Punjab",
+        lat: 30.0561,
+        lon: 70.6348
+    },
+
+    {
+        name: "Rahim Yar Khan",
+        province: "Punjab",
+        lat: 28.4202,
+        lon: 70.2952
+    },
+
+    {
+        name: "Jhelum",
+        province: "Punjab",
+        lat: 32.9425,
+        lon: 73.7257
+    },
+
+    {
+        name: "Attock",
+        province: "Punjab",
+        lat: 33.7660,
+        lon: 72.3609
+    },
+
+    {
+        name: "Chakwal",
+        province: "Punjab",
+        lat: 32.9328,
+        lon: 72.8634
+    },
+
+    {
+        name: "Mianwali",
+        province: "Punjab",
+        lat: 32.5853,
+        lon: 71.5436
+    },
+
+    {
+        name: "Muzaffargarh",
+        province: "Punjab",
+        lat: 30.0726,
+        lon: 71.1938
+    },
+
+
+    /* Sindh */
+
+    {
+        name: "Karachi",
+        province: "Sindh",
+        lat: 24.8607,
+        lon: 67.0011
+    },
+
+    {
+        name: "Hyderabad",
+        province: "Sindh",
+        lat: 25.3960,
+        lon: 68.3578
+    },
+
+    {
+        name: "Sukkur",
+        province: "Sindh",
+        lat: 27.7052,
+        lon: 68.8574
+    },
+
+    {
+        name: "Larkana",
+        province: "Sindh",
+        lat: 27.5590,
+        lon: 68.2123
+    },
+
+    {
+        name: "Nawabshah",
+        province: "Sindh",
+        lat: 26.2483,
+        lon: 68.4096
+    },
+
+    {
+        name: "Mirpur Khas",
+        province: "Sindh",
+        lat: 25.5269,
+        lon: 69.0111
+    },
+
+    {
+        name: "Thatta",
+        province: "Sindh",
+        lat: 24.7475,
+        lon: 67.9235
+    },
+
+    {
+        name: "Jacobabad",
+        province: "Sindh",
+        lat: 28.2769,
+        lon: 68.4378
+    },
+
+
+    /* Khyber Pakhtunkhwa */
+
+    {
+        name: "Peshawar",
+        province: "Khyber Pakhtunkhwa",
+        lat: 34.0151,
+        lon: 71.5249
+    },
+
+    {
+        name: "Mardan",
+        province: "Khyber Pakhtunkhwa",
+        lat: 34.1989,
+        lon: 72.0404
+    },
+
+    {
+        name: "Mingora",
+        province: "Khyber Pakhtunkhwa",
+        lat: 34.7717,
+        lon: 72.3602
+    },
+
+    {
+        name: "Mansehra",
+        province: "Khyber Pakhtunkhwa",
+        lat: 34.3333,
+        lon: 73.2000
+    },
+
+    {
+        name: "Abbottabad",
+        province: "Khyber Pakhtunkhwa",
+        lat: 34.1688,
+        lon: 73.2215
+    },
+
+    {
+        name: "Kohat",
+        province: "Khyber Pakhtunkhwa",
+        lat: 33.5889,
+        lon: 71.4429
+    },
+
+    {
+        name: "Nowshera",
+        province: "Khyber Pakhtunkhwa",
+        lat: 34.0159,
+        lon: 72.1251
+    },
+
+    {
+        name: "Charsadda",
+        province: "Khyber Pakhtunkhwa",
+        lat: 34.1482,
+        lon: 71.7406
+    },
+
+    {
+        name: "Bannu",
+        province: "Khyber Pakhtunkhwa",
+        lat: 32.9861,
+        lon: 70.6042
+    },
+
+    {
+        name: "Dera Ismail Khan",
+        province: "Khyber Pakhtunkhwa",
+        lat: 31.8315,
+        lon: 70.9012
+    },
+
+    {
+        name: "Swabi",
+        province: "Khyber Pakhtunkhwa",
+        lat: 34.1202,
+        lon: 72.4698
+    },
+
+    {
+        name: "Haripur",
+        province: "Khyber Pakhtunkhwa",
+        lat: 33.9946,
+        lon: 72.9340
+    },
+
+
+    /* Balochistan */
+
+    {
+        name: "Quetta",
+        province: "Balochistan",
+        lat: 30.1798,
+        lon: 66.9750
+    },
+
+    {
+        name: "Gwadar",
+        province: "Balochistan",
+        lat: 25.1264,
+        lon: 62.3225
+    },
+
+    {
+        name: "Turbat",
+        province: "Balochistan",
+        lat: 26.0023,
+        lon: 63.0600
+    },
+
+    {
+        name: "Khuzdar",
+        province: "Balochistan",
+        lat: 27.8000,
+        lon: 66.6167
+    },
+
+    {
+        name: "Chaman",
+        province: "Balochistan",
+        lat: 30.9177,
+        lon: 66.4526
+    },
+
+    {
+        name: "Sibi",
+        province: "Balochistan",
+        lat: 29.5448,
+        lon: 67.8773
+    },
+
+    {
+        name: "Zhob",
+        province: "Balochistan",
+        lat: 31.3417,
+        lon: 69.4481
+    },
+
+
+    /* Islamabad */
+
+    {
+        name: "Islamabad",
+        province: "Islamabad Capital Territory",
+        lat: 33.6844,
+        lon: 73.0479
+    },
+
+
+    /* Gilgit Baltistan */
+
+    {
+        name: "Gilgit",
+        province: "Gilgit-Baltistan",
+        lat: 35.9208,
+        lon: 74.3144
+    },
+
+    {
+        name: "Skardu",
+        province: "Gilgit-Baltistan",
+        lat: 35.2971,
+        lon: 75.6333
+    },
+
+    {
+        name: "Hunza",
+        province: "Gilgit-Baltistan",
+        lat: 36.3167,
+        lon: 74.6500
+    },
+
+
+    /* Azad Kashmir */
+
+    {
+        name: "Muzaffarabad",
+        province: "Azad Jammu and Kashmir",
+        lat: 34.3700,
+        lon: 73.4711
+    },
+
+    {
+        name: "Mirpur",
+        province: "Azad Jammu and Kashmir",
+        lat: 33.1461,
+        lon: 73.7513
+    },
+
+    {
+        name: "Rawalakot",
+        province: "Azad Jammu and Kashmir",
+        lat: 33.8578,
+        lon: 73.7604
+    },
+
+    {
+        name: "Kotli",
+        province: "Azad Jammu and Kashmir",
+        lat: 33.5184,
+        lon: 73.9022
+    }
+
+];
+
+
+
+/* =========================================================
+   WEATHER INFORMATION
+========================================================= */
+
+function weatherInfo(code) {
+
+    const weather = {
+        0:  ["☀️",  "صاف آسمان", "Clear sky"],
+        1:  ["🌤️", "زیادہ تر صاف", "Mainly clear"],
+        2:  ["⛅",  "جزوی ابر آلود", "Partly cloudy"],
+        3:  ["☁️",  "ابر آلود", "Overcast"],
+        45: ["🌫️", "دھند", "Fog"],
+        48: ["🌫️", "دھند", "Rime fog"],
+        51: ["🌦️", "ہلکی بوندا باندی", "Light drizzle"],
+        53: ["🌦️", "بوندا باندی", "Drizzle"],
+        55: ["🌧️", "تیز بوندا باندی", "Heavy drizzle"],
+        61: ["🌧️", "ہلکی بارش", "Light rain"],
+        63: ["🌧️", "بارش", "Rain"],
+        65: ["🌧️", "تیز بارش", "Heavy rain"],
+        71: ["🌨️", "ہلکی برف باری", "Light snow"],
+        73: ["🌨️", "برف باری", "Snow"],
+        75: ["❄️",  "تیز برف باری", "Heavy snow"],
+        80: ["🌦️", "بارش کے چھینٹے", "Rain showers"],
+        81: ["🌧️", "بارش", "Rain"],
+        82: ["⛈️",  "تیز بارش", "Heavy rain"],
+        95: ["⛈️",  "گرج چمک", "Thunderstorm"],
+        96: ["⛈️",  "گرج چمک اور اولے", "Thunderstorm with hail"],
+        99: ["⛈️",  "شدید گرج چمک اور اولے", "Severe thunderstorm with hail"]
+    };
+
+    const item = weather[code];
+
+    if (!item) {
+        return [
+            "🌤️",
+            currentLang === "ur" ? "موسم دستیاب نہیں" : "Weather unavailable"
+        ];
+    }
+
+    return [
+        item[0],
+        currentLang === "ur" ? item[1] : item[2]
+    ];
+
+}
+
+
+/* =========================================================
+   WIND DIRECTION
+========================================================= */
+
+function getWindDirection(degrees) {
+
+    if (
+        degrees === null ||
+        degrees === undefined
+    ) {
+        return "--";
+    }
+
+    const directions = {
+        ur: [
+            "شمال",
+            "شمال مشرق",
+            "مشرق",
+            "جنوب مشرق",
+            "جنوب",
+            "جنوب مغرب",
+            "مغرب",
+            "شمال مغرب"
+        ],
+        en: [
+            "North",
+            "Northeast",
+            "East",
+            "Southeast",
+            "South",
+            "Southwest",
+            "West",
+            "Northwest"
+        ]
+    };
+
+    const index =
+        Math.round(
+            degrees / 45
+        ) % 8;
+
+    return directions[currentLang][index];
+
+}
+
+
+/* =========================================================
+   INITIALIZE MAP
+========================================================= */
+
+function initMap() {
+
+    if (typeof L === "undefined") {
+        console.log("Leaflet load نہیں ہوا - نقشہ بند ہے");
+        return;
+    }
+
+
+    map = L.map("map", {
+
+        minZoom: 5,
+
+        maxZoom: 12,
+
+        maxBounds:
+            PAKISTAN_BOUNDS,
+
+        maxBoundsViscosity:
+            1.0
+
+    });
+
+
+    map.fitBounds(
+        PAKISTAN_BOUNDS
+    );
+
+
+    L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+            attribution:
+                "&copy; OpenStreetMap contributors"
+        }
+    ).addTo(map);
+
+
+
+    /*
+       Pakistan actual boundary
+    */
+
+    fetch(
+        "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson"
+    )
+
+    .then(
+        response => {
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Boundary API Error"
+                );
+
+            }
+
+            return response.json();
+
+        }
+    )
+
+    .then(
+        data => {
+
+            const feature =
+                data.features.find(
+                    item => {
+
+                        const p =
+                            item.properties || {};
+
+                        return (
+                            p.ISO_A3 === "PAK" ||
+                            p.ISO3166_1_Alpha_3 === "PAK" ||
+                            p["ISO3166-1-Alpha-3"] === "PAK"
+                        );
+
+                    }
+                );
+
+
+            if (!feature) {
+                return;
+            }
+
+
+            pakistanBoundary =
+                L.geoJSON(
+                    feature,
+                    {
+
+                        style: {
+
+                            color:
+                                "#00d9ff",
+
+                            weight:
+                                3,
+
+                            fillColor:
+                                "#138a72",
+
+                            fillOpacity:
+                                0.12
+
+                        }
+
+                    }
+                ).addTo(map);
+
+
+            map.fitBounds(
+                pakistanBoundary.getBounds(),
+                {
+                    padding:
+                        [10, 10]
+                }
+            );
+
+        }
+    )
+
+    .catch(
+        error => {
+
+            console.log(
+                "Pakistan boundary error:",
+                error
+            );
+
+            map.fitBounds(
+                PAKISTAN_BOUNDS
+            );
+
+        }
+    );
+
+
+
+    /*
+       Map click
+    */
+
+    map.on(
+        "click",
+        async function(e) {
+
+            const lat =
+                e.latlng.lat;
+
+            const lon =
+                e.latlng.lng;
+
+
+            if (
+                lat < 23.3 ||
+                lat > 37.2 ||
+                lon < 60.5 ||
+                lon > 77.9
+            ) {
+
+                return;
+
+            }
+
+
+            try {
+
+                const url =
+                    "https://nominatim.openstreetmap.org/reverse" +
+                    "?format=json" +
+                    "&lat=" + lat +
+                    "&lon=" + lon +
+                    "&zoom=10" +
+                    "&addressdetails=1";
+
+
+                const response =
+                    await fetch(url);
+
+
+                const data =
+                    await response.json();
+
+
+                const address =
+                    data.address || {};
+
+
+                const city =
+                    address.city ||
+                    address.town ||
+                    address.municipality ||
+                    address.village ||
+                    address.county ||
+                    t("selectedLocation");
+
+
+                selectLocation(
+                    city,
+                    lat,
+                    lon,
+                    "Pakistan",
+                    address.state || ""
+                );
+
+            }
+
+            catch(error) {
+
+                console.log(
+                    "Map click error:",
+                    error
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+
+/* =========================================================
+   MAP MARKER
+========================================================= */
+
+function updateMapMarker(
+    lat,
+    lon,
+    cityName
+) {
+
+    if (!map) {
+        return;
+    }
+
+
+    if (marker) {
+
+        map.removeLayer(
+            marker
+        );
+
+    }
+
+
+    marker =
+        L.marker(
+            [lat, lon]
+        )
+        .addTo(map)
+        .bindPopup(
+            "<b>" +
+            cityLabel(cityName) + "</b><br>🇵🇰 " + t("pakistan")
+        )
+        .openPopup();
+
+
+    map.setView(
+        [lat, lon],
+        9,
+        {
+            animate:
+                true
+        }
+    );
+
+}
+
+
+
+/* =========================================================
+   LOCAL CITY SEARCH
+========================================================= */
+
+function searchLocalCities(query) {
+
+    const q =
+        query
+        .toLowerCase()
+        .trim();
+
+    if (!q) {
+        return [];
+    }
+
+    return PAKISTAN_CITIES.filter(
+        city => {
+
+            const urCity = CITY_UR[city.name] || "";
+            const urProvince = PROVINCE_UR[city.province] || "";
+
+            return (
+                city.name
+                    .toLowerCase()
+                    .includes(q)
+                ||
+                city.province
+                    .toLowerCase()
+                    .includes(q)
+                ||
+                urCity.includes(q)
+                ||
+                urProvince.includes(q)
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   API CITY SEARCH
+========================================================= */
+
+async function searchOnlineCities(
+    query
+) {
+
+    try {
+
+        const url =
+            "https://geocoding-api.open-meteo.com/v1/search" +
+            "?name=" +
+            encodeURIComponent(query) +
+            "&count=100" +
+            "&language=en" +
+            "&format=json";
+
+
+        const response =
+            await fetch(
+                url
+            );
+
+
+        if (!response.ok) {
+            return [];
+        }
+
+
+        const data =
+            await response.json();
+
+
+        const results =
+            Array.isArray(
+                data.results
+            )
+            ?
+            data.results
+            :
+            [];
+
+
+        return results.filter(
+            city => {
+
+                return (
+                    String(
+                        city.country_code || ""
+                    ).toUpperCase()
+                    ===
+                    "PK"
+                );
+
+            }
+        );
+
+    }
+
+    catch(error) {
+
+        console.log(
+            "Online city search:",
+            error
+        );
+
+        return [];
+
+    }
+
+}
+
+
+
+/* =========================================================
+   MAIN SEARCH
+========================================================= */
+
+async function searchCities(
+    query
+) {
+
+    const resultsBox =
+        document.getElementById(
+            "searchResults"
+        );
+
+
+    query =
+        query.trim();
+
+
+    if (query.length < 2) {
+
+        resultsBox.innerHTML = "";
+
+        return;
+
+    }
+
+
+    resultsBox.innerHTML =
+        `
+        <div class="search-message">
+            🔎 ${t("searching")}
+        </div>
+        `;
+
+
+
+    /*
+       پہلے local database
+    */
+
+    let localResults =
+        searchLocalCities(
+            query
+        );
+
+
+    /*
+       پھر online API
+    */
+
+    const onlineResults =
+        await searchOnlineCities(
+            query
+        );
+
+
+
+    /*
+       دونوں results merge
+    */
+
+    const combined = [];
+
+
+    localResults.forEach(
+        city => {
+
+            combined.push({
+
+                name:
+                    city.name,
+
+                admin1:
+                    city.province,
+
+                latitude:
+                    city.lat,
+
+                longitude:
+                    city.lon,
+
+                country:
+                    "Pakistan",
+
+                source:
+                    "local"
+
+            });
+
+        }
+    );
+
+
+    onlineResults.forEach(
+        city => {
+
+            combined.push({
+
+                name:
+                    city.name,
+
+                admin1:
+                    city.admin1 || "",
+
+                latitude:
+                    Number(
+                        city.latitude
+                    ),
+
+                longitude:
+                    Number(
+                        city.longitude
+                    ),
+
+                country:
+                    "Pakistan",
+
+                source:
+                    "online"
+
+            });
+
+        }
+    );
+
+
+
+    /*
+       duplicate remove
+    */
+
+    const unique = [];
+
+    const seen =
+        new Set();
+
+
+    combined.forEach(
+        city => {
+
+            const key =
+                (
+                    city.name +
+                    "|" +
+                    city.admin1 +
+                    "|" +
+                    Number(
+                        city.latitude
+                    ).toFixed(3) +
+                    "|" +
+                    Number(
+                        city.longitude
+                    ).toFixed(3)
+                )
+                .toLowerCase();
+
+
+            if (
+                !seen.has(key)
+            ) {
+
+                seen.add(key);
+
+                unique.push(
+                    city
+                );
+
+            }
+
+        }
+    );
+
+
+
+    /*
+       زیادہ سے زیادہ 30 results
+    */
+
+    displaySearchResults(
+        unique.slice(
+            0,
+            30
+        )
+    );
+
+}
+
+
+
+/* =========================================================
+   DISPLAY SEARCH RESULTS
+========================================================= */
+
+function displaySearchResults(
+    results
+) {
+
+    const box =
+        document.getElementById(
+            "searchResults"
+        );
+
+
+    box.innerHTML = "";
+
+
+    if (
+        !results ||
+        results.length === 0
+    ) {
+
+        box.innerHTML =
+            `
+            <div class="search-message">
+                ❌ ${t("noCity")}
+            </div>
+            `;
+
+        return;
+
+    }
+
+
+
+    results.forEach(
+        city => {
+
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+
+            button.type =
+                "button";
+
+
+            button.className =
+                "city-result";
+
+
+            const cityName =
+                city.name ||
+                t("unknownCity");
+
+
+            const province =
+                city.admin1 ||
+                "Pakistan";
+
+
+            button.innerHTML =
+                `
+                <span class="city-name">
+                    📍 ${cityLabel(cityName)}
+                </span>
+
+                <span class="city-info">
+                    ${provinceLabel(province)} • ${t("pakistan")}
+                </span>
+                `;
+
+
+            button.addEventListener(
+                "click",
+                function() {
+
+                    selectLocation(
+
+                        cityName,
+
+                        Number(
+                            city.latitude
+                        ),
+
+                        Number(
+                            city.longitude
+                        ),
+
+                        "Pakistan",
+
+                        province
+
+                    );
+
+                }
+            );
+
+
+            box.appendChild(
+                button
+            );
+
+        }
+    );
+
+}
+
+
+
+/* =========================================================
+   SELECT LOCATION
+========================================================= */
+
+function selectLocation(
+    cityName,
+    latitude,
+    longitude,
+    country = "Pakistan",
+    province = ""
+) {
+
+    currentLatitude =
+        Number(latitude);
+
+    currentLongitude =
+        Number(longitude);
+
+    lastCity =
+        cityName;
+
+    lastProvince =
+        province;
+
+
+    /*
+       Location name + coordinates
+    */
+
+    renderLocation();
+
+
+    /*
+       Input
+    */
+
+    document.getElementById(
+        "searchInput"
+    ).value =
+        cityLabel(cityName);
+
+
+    /*
+       Search results clear
+    */
+
+    document.getElementById(
+        "searchResults"
+    ).innerHTML =
+        "";
+
+
+    /*
+       Map
+    */
+
+    updateMapMarker(
+        currentLatitude,
+        currentLongitude,
+        cityName
+    );
+
+
+    /*
+       Weather
+    */
+
+    fetchWeatherData(
+        currentLatitude,
+        currentLongitude
+    );
+
+}
+
+
+/* =========================================================
+   WEATHER API
+========================================================= */
+
+async function fetchWeatherData(
+    latitude,
+    longitude
+) {
+
+    showLoading();
+
+
+    try {
+
+        const current =
+            [
+                "temperature_2m",
+                "relative_humidity_2m",
+                "apparent_temperature",
+                "is_day",
+                "precipitation",
+                "rain",
+                "cloud_cover",
+                "wind_speed_10m",
+                "wind_direction_10m",
+                "weather_code"
+            ].join(",");
+
+
+        const daily =
+            [
+                "weather_code",
+                "temperature_2m_max",
+                "temperature_2m_min",
+                "sunrise",
+                "sunset"
+            ].join(",");
+
+
+        const url =
+            "https://api.open-meteo.com/v1/forecast" +
+
+            "?latitude=" +
+            encodeURIComponent(
+                latitude
+            ) +
+
+            "&longitude=" +
+            encodeURIComponent(
+                longitude
+            ) +
+
+            "&current=" +
+            current +
+
+            "&daily=" +
+            daily +
+
+            "&timezone=auto" +
+
+            "&forecast_days=7";
+
+
+        const response =
+            await fetch(url);
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Weather API Error"
+            );
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        currentTimezone =
+            data.timezone ||
+            "Asia/Karachi";
+
+        lastWeatherData = data;
+
+
+
+        /*
+           Current
+        */
+
+        const c =
+            data.current;
+
+
+        const info =
+            weatherInfo(
+                c.weather_code
+            );
+
+
+        document.getElementById(
+            "weatherIcon"
+        ).textContent =
+            info[0];
+
+
+        document.getElementById(
+            "temperature"
+        ).textContent =
+            Math.round(
+                c.temperature_2m
+            ) +
+            "°C";
+
+
+        document.getElementById(
+            "weatherDescription"
+        ).textContent =
+            info[1];
+
+
+        document.getElementById(
+            "feelsLike"
+        ).textContent =
+            Math.round(
+                c.apparent_temperature
+            ) +
+            "°C";
+
+
+        document.getElementById(
+            "humidity"
+        ).textContent =
+            c.relative_humidity_2m +
+            "%";
+
+
+        document.getElementById(
+            "windSpeed"
+        ).textContent =
+            Math.round(
+                c.wind_speed_10m
+            ) +
+            " km/h";
+
+
+        document.getElementById(
+            "windDirection"
+        ).textContent =
+            getWindDirection(
+                c.wind_direction_10m
+            );
+
+
+        document.getElementById(
+            "rain"
+        ).textContent =
+            (
+                c.rain ?? 0
+            ) +
+            " mm";
+
+
+        document.getElementById(
+            "cloudCover"
+        ).textContent =
+            c.cloud_cover +
+            "%";
+
+
+
+        /*
+           Sunrise
+        */
+
+        if (
+            data.daily &&
+            data.daily.sunrise &&
+            data.daily.sunrise[0]
+        ) {
+
+            document.getElementById(
+                "sunrise"
+            ).textContent =
+                formatTime(
+                    data.daily.sunrise[0]
+                );
+
+        }
+
+
+        /*
+           Sunset
+        */
+
+        if (
+            data.daily &&
+            data.daily.sunset &&
+            data.daily.sunset[0]
+        ) {
+
+            document.getElementById(
+                "sunset"
+            ).textContent =
+                formatTime(
+                    data.daily.sunset[0]
+                );
+
+        }
+
+
+
+        /*
+           Forecast
+        */
+
+        displayForecast(
+            data.daily
+        );
+
+    }
+
+    catch(error) {
+
+        console.error(
+            error
+        );
+
+
+        document.getElementById(
+            "weatherDescription"
+        ).textContent =
+            t("weatherFailed");
+
+
+        document.getElementById(
+            "forecast"
+        ).innerHTML =
+            `
+            <div class="error">
+                ❌ ${t("apiError")}
+            </div>
+            `;
+
+    }
+
+}
+
+
+
+/* =========================================================
+   FORECAST
+========================================================= */
+
+function displayForecast(
+    daily
+) {
+
+    const box =
+        document.getElementById(
+            "forecast"
+        );
+
+
+    box.innerHTML =
+        "";
+
+
+    if (
+        !daily ||
+        !daily.time
+    ) {
+
+        box.innerHTML =
+            `
+            <div class="error">
+                ${t("noForecast")}
+            </div>
+            `;
+
+        return;
+
+    }
+
+
+
+    for (
+        let i = 0;
+        i < daily.time.length;
+        i++
+    ) {
+
+        const code =
+            daily.weather_code[i];
+
+
+        const info =
+            weatherInfo(
+                code
+            );
+
+
+        const date =
+            new Date(
+                daily.time[i] +
+                "T00:00:00"
+            );
+
+
+        const day =
+            date.toLocaleDateString(
+                localeCode(),
+                {
+                    weekday:
+                        "short"
+                }
+            );
+
+
+        const formattedDate =
+            date.toLocaleDateString(
+                localeCode(),
+                {
+                    day:
+                        "2-digit",
+
+                    month:
+                        "short"
+                }
+            );
+
+
+        const card =
+            document.createElement(
+                "div"
+            );
+
+
+        card.className =
+            "forecast-day";
+
+
+        card.innerHTML =
+            `
+            <div class="day">
+                ${day}
+            </div>
+
+            <div class="date">
+                ${formattedDate}
+            </div>
+
+            <div class="icon">
+                ${info[0]}
+            </div>
+
+            <div class="forecast-temp">
+
+                <span class="max">
+                    ${Math.round(
+                        daily.temperature_2m_max[i]
+                    )}°
+                </span>
+
+                /
+
+                <span class="min">
+                    ${Math.round(
+                        daily.temperature_2m_min[i]
+                    )}°
+                </span>
+
+            </div>
+
+            <div
+                style="
+                    margin-top:5px;
+                    font-size:11px;
+                    color:#b9cad8;
+                "
+            >
+                ${info[1]}
+            </div>
+            `;
+
+
+        box.appendChild(
+            card
+        );
+
+    }
+
+}
+
+
+
+/* =========================================================
+   FORMAT TIME
+========================================================= */
+
+function formatTime(
+    value
+) {
+
+    if (!value) {
+        return "--:--";
+    }
+
+
+    const parts =
+        value.split("T");
+
+
+    if (
+        parts.length < 2
+    ) {
+        return value;
+    }
+
+
+    return parts[1]
+        .substring(
+            0,
+            5
+        );
+
+}
+
+
+
+/* =========================================================
+   PAKISTAN CLOCK
+========================================================= */
+
+function updateClocks() {
+
+    const now =
+        new Date();
+
+
+    /*
+       Pakistan time
+    */
+
+    const pakistanTime =
+        new Intl.DateTimeFormat(
+            localeCode(),
+            {
+
+                timeZone:
+                    "Asia/Karachi",
+
+                hour:
+                    "2-digit",
+
+                minute:
+                    "2-digit",
+
+                second:
+                    "2-digit",
+
+                hour12:
+                    true
+
+            }
+        ).format(now);
+
+
+    const pakistanDate =
+        new Intl.DateTimeFormat(
+            localeCode(),
+            {
+
+                timeZone:
+                    "Asia/Karachi",
+
+                weekday:
+                    "long",
+
+                day:
+                    "2-digit",
+
+                month:
+                    "long",
+
+                year:
+                    "numeric"
+
+            }
+        ).format(now);
+
+
+
+    document.getElementById(
+        "pakistanTime"
+    ).textContent =
+        pakistanTime;
+
+
+    document.getElementById(
+        "pakistanDate"
+    ).textContent =
+        pakistanDate;
+
+
+
+    /*
+       Selected city time
+    */
+
+    try {
+
+        const cityTime =
+            new Intl.DateTimeFormat(
+                localeCode(),
+                {
+
+                    timeZone:
+                        currentTimezone,
+
+                    hour:
+                        "2-digit",
+
+                    minute:
+                        "2-digit",
+
+                    second:
+                        "2-digit",
+
+                    hour12:
+                        true
+
+                }
+            ).format(now);
+
+
+        const cityDate =
+            new Intl.DateTimeFormat(
+                localeCode(),
+                {
+
+                    timeZone:
+                        currentTimezone,
+
+                    weekday:
+                        "long",
+
+                    day:
+                        "2-digit",
+
+                    month:
+                        "long",
+
+                    year:
+                        "numeric"
+
+                }
+            ).format(now);
+
+
+        document.getElementById(
+            "cityTime"
+        ).textContent =
+            cityTime;
+
+
+        document.getElementById(
+            "cityDate"
+        ).textContent =
+            cityDate;
+
+    }
+
+    catch(error) {
+
+        console.log(
+            "City clock error:",
+            error
+        );
+
+    }
+
+}
+
+
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+function showLoading() {
+
+    document.getElementById(
+        "weatherDescription"
+    ).textContent =
+        t("weatherLoading");
+
+}
+
+
+
+/* =========================================================
+   SEARCH EVENTS
+========================================================= */
+
+const searchInput =
+    document.getElementById(
+        "searchInput"
+    );
+
+
+const searchBtn =
+    document.getElementById(
+        "searchBtn"
+    );
+
+
+
+/*
+   Button search
+*/
+
+searchBtn.addEventListener(
+    "click",
+    function() {
+
+        searchCities(
+            searchInput.value
+        );
+
+    }
+);
+
+
+
+/*
+   Enter key
+*/
+
+searchInput.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (
+            event.key === "Enter"
+        ) {
+
+            event.preventDefault();
+
+            searchCities(
+                searchInput.value
+            );
+
+        }
+
+    }
+);
+
+
+
+/*
+   Live search
+*/
+
+searchInput.addEventListener(
+    "input",
+    function() {
+
+        clearTimeout(
+            searchTimer
+        );
+
+
+        const query =
+            this.value.trim();
+
+
+        if (
+            query.length < 2
+        ) {
+
+            document.getElementById(
+                "searchResults"
+            ).innerHTML =
+                "";
+
+            return;
+
+        }
+
+
+        searchTimer =
+            setTimeout(
+                function() {
+
+                    searchCities(
+                        query
+                    );
+
+                },
+                350
+            );
+
+    }
+);
+
+
+
+/* =========================================================
+   START APPLICATION
+========================================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function() {
+
+
+        /*
+           Map
+        */
+
+        /*
+           Language
+        */
+
+        applyLanguage();
+
+        document.querySelectorAll(".lang-btn").forEach(function(btn) {
+            btn.addEventListener("click", function() {
+                setLanguage(btn.getAttribute("data-lang"));
+            });
+        });
+
+
+        initMap();
+
+
+        /*
+           Default city = Mansehra
+        */
+
+        selectLocation(
+
+            "Mansehra",
+
+            34.3333,
+
+            73.2000,
+
+            "Pakistan",
+
+            "Khyber Pakhtunkhwa"
+
+        );
+
+
+        /*
+           Clock
+        */
+
+        updateClocks();
+
+
+        setInterval(
+            updateClocks,
+            1000
+        );
+
+    }
+);
+
+</script>
+
+
+</body>
+</html>
